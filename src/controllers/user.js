@@ -204,10 +204,9 @@ class UserController {
           "we have recieved change password request if it was you click the link below, otherwise ignore this email"
         );
         return onSuccess(res, 200, "check you email to change password");
-      } else {
-        return onError(res, 400, "Email doesn't exist");
       }
     } catch (error) {
+      console.log(error);
       return onError(res, 500, "Internal Server Error");
     }
   }
@@ -221,7 +220,9 @@ class UserController {
       if (!verifyToken) {
         return onError(res, 401, "Unauthorized action");
       }
-      return onSuccess(res, 200, "redirected successfully");
+      return res.redirect(
+        `${process.env.FRONTEND_URL}/reset-password/${token}/${email}`
+      );
     } catch (error) {
       return onError(res, 500, "Internal Server Error");
     }
@@ -241,6 +242,7 @@ class UserController {
         foundUser.password = password;
         foundUser.email = useremail;
         await foundUser.save();
+        console.log("here");
         return onSuccess(
           res,
           200,
