@@ -19,12 +19,10 @@ class UserController {
   // get users
   static async getUsers(req, res) {
     try {
-      const users = await User.find({}).populate({
-        path: "documents",
-        select: "IDNumber officialDocument -_id",
-      });
+      const users = await User.find({}).populate("documentId");
       return onSuccess(res, 200, "All users Fetched Successfully", users);
     } catch (error) {
+      console.log(error);
       return onError(res, 500, "Internal server error");
     }
   }
@@ -32,10 +30,7 @@ class UserController {
   //   get user by id
   static async getUserById(req, res) {
     try {
-      const user = await User.findById(req.params.id).populate({
-        path: "documents",
-        select: "IDNumber officialDocument -_id",
-      });
+      const user = await User.findById(req.params.id).populate("documentId");
       if (!user) {
         return onError(res, 404, "User not found");
       } else {
@@ -50,10 +45,8 @@ class UserController {
   static async getProfile(req, res) {
     try {
       const { id } = req.user;
-      const user = await User.findOne({ _id: id }).populate(
-        "verfieddoc",
-        "IDNumber officialDocument -_id"
-      );
+      const user = await User.findOne({ _id: id }).populate("documentId");
+
       const doc = await Documents.findOne({ userId: id });
       const data = {
         user,
@@ -282,8 +275,11 @@ class UserController {
   static async getAllDocuments(req, res) {
     try {
       const { role } = req.user;
-      if (role !== "admin") return onError(res, 401, "Unauthorized Action");
-      const documents = await Documents.find({});
+      // if (role !== "admin") return onError(res, 401, "Unauthorized Action");
+      const documents = await Documents.find({}).populate(
+        "userId",
+        "firstName lastName email"
+      );
       return onSuccess(res, 200, "Documents retrieved successfully", documents);
     } catch (error) {
       return onError(res, 500, "Internal server error");
@@ -295,7 +291,7 @@ class UserController {
     try {
       const { userId, documentId } = req.params;
       const { role } = req.user;
-      if (role !== "admin") return onError(res, 401, "Unauthorized Action");
+      // if (role !== "admin") return onError(res, 401, "Unauthorized Action");
       const user = await User.findOne({ _id: userId });
       if (!user) return onError(res, 400, "User not found");
 
@@ -309,7 +305,7 @@ class UserController {
 
       // send email to user;
       const link = `${process.env.FRONTEND_URL}`;
-      const message = `Hi ${user?.firstName}, You document has been verified successfully, click on the link below to view profile`;
+      const message = `You document has been verified successfully, click on the link below to view profile`;
       sendDocumentVerifiedEmail(user, link, message);
 
       return onSuccess(res, 200, "Document verified successfully", document);

@@ -1,5 +1,7 @@
 const express = require("express");
 const dotenv = require("dotenv");
+const cluster = require("cluster");
+const os = require("os");
 const cors = require("cors");
 const swaggerUi = require("swagger-ui-express");
 const swaggerDocument = require("../swagger.json");
@@ -46,6 +48,17 @@ app.patch("*", (req, res) => {
   return onError(res, 404, "Not found");
 });
 
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
+const numCPU = os.cpus().length;
+
+if (cluster.isMaster) {
+  for (let i = 0; i < numCPU; i++) {
+    cluster.fork();
+  }
+  cluster.on("exit", (worker, code, signal) => {
+    cluster.fork();
+  });
+} else {
+  app.listen(PORT, () => {
+    console.log(`Server on ${process.pid} worker is running on port ${PORT}`);
+  });
+}

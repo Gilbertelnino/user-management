@@ -24,7 +24,7 @@ router.patch("/reset-password/:token/:email", UserController.resetPassword);
 router.post("/document/add", verifyAccessToken, UserController.createDocument);
 router.get("/document/all", verifyAccessToken, UserController.getAllDocuments);
 router.patch(
-  "/:userId/document/:documentId",
+  "/:userId/document/:documentId/verify",
   verifyAccessToken,
   UserController.verifyDocument
 );

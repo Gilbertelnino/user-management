@@ -36,7 +36,7 @@ const userSchema = mongoose.Schema({
     type: String,
   },
 
-  verfieddoc: {
+  documentId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Documents",
   },
