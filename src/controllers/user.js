@@ -1,5 +1,6 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const speakeasy = require("speakeasy");
 const {
   signAccessToken,
   generateToken,
@@ -65,9 +66,11 @@ class UserController {
       const { photo } = req.files;
       const tempPath = photo.tempFilePath;
       const { secure_url } = await cloudinaryFileUpload(tempPath);
+      const temp_secret = speakeasy.generateSecret();
       const data = {
         ...req.body,
         profileUrl: secure_url,
+        temp_secret: temp_secret.base32,
       };
       const user = await User.findOne({ email: data.email });
       if (user) return onError(res, 400, "Emial already Registered");
@@ -108,6 +111,7 @@ class UserController {
         nationality,
         profileUrl,
         birthDate,
+        temp_secret,
       } = userInfo.payload;
       // check user if is already an exist
 
@@ -124,6 +128,15 @@ class UserController {
       const salt = await bcrypt.genSalt(10);
       const hashedPassword = await bcrypt.hash(password, salt);
 
+      // verify otp
+      const verified = speakeasy.totp.verify({
+        secret: temp_secret,
+        encoding: "base32",
+        token: req.body.otp,
+      });
+
+      if (!verified) return onError(res, 400, "Invalid code or expired");
+
       const newuser = await User.create({
         firstName,
         lastName,
@@ -137,6 +150,7 @@ class UserController {
         birthDate,
         password: hashedPassword,
         role: "Admin",
+        secret,
       });
       const accessToken = await signAccessToken(newuser);
       return res.redirect(`${process.env.FRONTEND_URL}/verify/${accessToken}`);

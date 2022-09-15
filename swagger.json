@@ -9,7 +9,7 @@
       "email": "gilbeltelnino@gmail.com"
     }
   },
-  "host": "localhost:5000",
+  "host": "user-management12.herokuapp.com",
   "basePath": "/api",
   "schemes": ["http", "https"],
   "consumes": ["application/json"],
